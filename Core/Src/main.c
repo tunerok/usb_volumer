@@ -133,7 +133,7 @@ int main(void)
 	int count;
 	int mute_state = 1;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -180,7 +180,7 @@ int main(void)
 				for(int i = 0; i < delta; i++){
 					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(30);
+					HAL_Delay(10);
 				}
 			}
 			else if (delta < 0){
@@ -188,7 +188,7 @@ int main(void)
 				for(int i = 0; i > delta; i--){
 					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(30);
+					HAL_Delay(10);
 				}
 			} 
 		}
@@ -282,11 +282,11 @@ static void MX_TIM1_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 10;
+  sConfig.IC1Filter = 15;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 10;
+  sConfig.IC2Filter = 15;
   if (HAL_TIM_Encoder_Init(&htim1, &sConfig) != HAL_OK)
   {
     Error_Handler();
