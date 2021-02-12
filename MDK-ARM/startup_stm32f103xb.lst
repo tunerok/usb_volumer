@@ -463,12 +463,12 @@ ARM Macro Assembler    Page 8
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
 ork --depend=usb_volumer\startup_stm32f103xb.d -ousb_volumer\startup_stm32f103x
-b.o -I.\RTE\_usb_volumer -IC:\Users\Igorek\AppData\Local\Arm\Packs\ARM\CMSIS\5.
-7.0\CMSIS\Core\Include -IC:\Users\Igorek\AppData\Local\Arm\Packs\Keil\STM32F1xx
-_DFP\2.3.0\Device\Include --predefine="__EVAL SETA 1" --predefine="__MICROLIB S
-ETA 1" --predefine="__UVISION_VERSION SETA 532" --predefine="_RTE_ SETA 1" --pr
-edefine="STM32F10X_MD SETA 1" --predefine="_RTE_ SETA 1" --list=startup_stm32f1
-03xb.lst startup_stm32f103xb.s
+b.o -I.\RTE\_usb_volumer -ID:\Users\aashirov\AppData\Local\Arm\Packs\ARM\CMSIS\
+5.7.0\CMSIS\Core\Include -ID:\Users\aashirov\AppData\Local\Arm\Packs\Keil\STM32
+F1xx_DFP\2.3.0\Device\Include --predefine="__EVAL SETA 1" --predefine="__MICROL
+IB SETA 1" --predefine="__UVISION_VERSION SETA 532" --predefine="_RTE_ SETA 1" 
+--predefine="STM32F10X_MD SETA 1" --predefine="_RTE_ SETA 1" --list=startup_stm
+32f103xb.lst startup_stm32f103xb.s
 
 
 

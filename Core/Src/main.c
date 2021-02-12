@@ -21,8 +21,6 @@
 #include "main.h"
 #include "usb_device.h"
 
-
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_core.h"
@@ -31,7 +29,15 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-extern USBD_HandleTypeDef hUsbDeviceFS;
+#define USB_HID_SCAN_NEXT 0x01
+#define USB_HID_SCAN_PREV 0x02
+#define USB_HID_STOP      0x04
+#define USB_HID_EJECT     0x08
+#define USB_HID_PAUSE     0x10
+#define USB_HID_MUTE      0x20
+#define USB_HID_VOL_UP    0x40
+#define USB_HID_VOL_DEC   0x80
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -41,9 +47,11 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
 
@@ -52,13 +60,19 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
+void setCount(int state);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+volatile long pause    = 50;
+volatile long lastTurn = 0;
+volatile int state = 0; 
+volatile int count = 0; 
+int actualcount    = 0;       
 /* USER CODE END 0 */
 
 /**
@@ -90,6 +104,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	  // HID Mouse
   struct mouseHID_t {
@@ -104,6 +119,21 @@ int main(void)
   mouseHID.y = 0;
   mouseHID.wheel = 0;
 	int temp = 1;
+	
+	
+	struct mediaHID_t {
+    uint8_t id;
+    uint8_t keys;
+  };
+	
+	struct mediaHID_t mediaHID;
+  mediaHID.id = 2;
+  mediaHID.keys = 0;
+	
+	int count;
+	int mute_state = 1;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,31 +144,66 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		
-		  // Send HID report
-    switch (temp){
-			case 1:
-				mouseHID.x = 50;
-				temp = 2;
-				break;
-			case 2:
-				mouseHID.y = 50;
-				temp = 3;
-				break;
-			case 3:
-				mouseHID.x = -50;
-				temp = 4;
-				break;
-			case 4:
-				mouseHID.y = -50;
-				temp = 1;
-				break;
-			
+		
+		
+		if(HAL_GPIO_ReadPin(ENC_BTN_GPIO_Port, ENC_BTN_Pin)){
+			if (mute_state){
+				mediaHID.keys = USB_HID_MUTE;
+				mute_state = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+				mediaHID.keys = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+
+			}
+		}
+		else{
+			mute_state = 1;
 		}
 		
+		int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
+    currCounter = 32767 - ((currCounter-1) & 0xFFFF) / 2;
+    if(currCounter > 32768/2) {
+        // ??????????? ???????? ???????? ??:
+        //  ... 32766, 32767, 0, 1, 2 ...
+        // ? ????????:
+        //  ... -2, -1, 0, 1, 2 ...
+        currCounter = currCounter - 32768;
+    }
+    if(currCounter != actualcount) {
+        int32_t delta = currCounter-actualcount;
+        actualcount = currCounter;
+				//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+				if(delta > 0){
+				mediaHID.keys = USB_HID_VOL_UP;
+				for(int i = 0; i < delta; i++){
+					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					HAL_Delay(30);
+				}
+			}
+			else if (delta < 0){
+				mediaHID.keys = USB_HID_VOL_DEC;
+				for(int i = 0; i > delta; i--){
+					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					HAL_Delay(30);
+				}
+			} 
+		}
+		
+			
+				// Send HID report
+	//		mediaHID.keys = USB_HID_VOL_DEC;
+		//	USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+	//		HAL_Delay(30);
+	//		mediaHID.keys = 0;
+	//		USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+	//		HAL_Delay(30);
+
 		
 		
-    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mouseHID, sizeof(struct mouseHID_t));
-    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
@@ -189,6 +254,56 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 0;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 10;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 10;
+  if (HAL_TIM_Encoder_Init(&htim1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -198,18 +313,72 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /*Configure GPIO pins : PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ENC_BTN_Pin */
+  GPIO_InitStruct.Pin = ENC_BTN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(ENC_BTN_GPIO_Port, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
+/*void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (HAL_GetTick() - lastTurn < pause) return;
+	__disable_irq();
+	GPIO_PinState pinAValue,pinBValue ; 
+	pinAValue = HAL_GPIO_ReadPin(ENC_STR_GPIO_Port, ENC_STR_Pin);
+	pinBValue = HAL_GPIO_ReadPin(ENC_REV_GPIO_Port, ENC_REV_Pin);
+	if(GPIO_Pin==ENC_STR_Pin){
+		if (state == 0  && !pinAValue &&  pinBValue || state == 2  && pinAValue && !pinBValue) {
+    state += 1; // ???? ??????????? ???????, ?????????? ?????????? state
+    lastTurn = HAL_GetTick();
+  }
+  if (state == -1 && !pinAValue && !pinBValue || state == -3 && pinAValue &&  pinBValue) {
+    state -= 1; // ???? ??????????? ???????, ?????????? ? ????? ?????????? state
+    lastTurn = HAL_GetTick();
+  }
+  setCount(state); // ????????? ?? ???? ?? ??????? ???? ?? 4 ????????? ???????? (2 ?????????)
+  if (pinAValue && pinBValue && state != 0) state = 0; // ???? ???-?? ????? ?? ???, ?????????? ?????? ? ???????? ?????????
+		
+	}
+	if(GPIO_Pin==ENC_REV_Pin){
+		if (state == 1 && !pinAValue && !pinBValue || state == 3 && pinAValue && pinBValue) {
+    state += 1; // ???? ??????????? ???????, ?????????? ?????????? state
+    lastTurn = HAL_GetTick();
+  }
+  if (state == 0 && pinAValue && !pinBValue || state == -2 && !pinAValue && pinBValue) {
+    state -= 1; // ???? ??????????? ???????, ?????????? ? ????? ?????????? state
+    lastTurn = HAL_GetTick();
+  }
+  setCount(state); // ????????? ?? ???? ?? ??????? ???? ?? 4 ????????? ???????? (2 ?????????)
+  if (pinAValue && pinBValue && state != 0) state = 0; // ???? ???-?? ????? ?? ???, ?????????? ?????? ? ???????? ?????????
+	}
+	 __enable_irq();
+}
+
+void setCount(int state) {          // ????????????? ???????? ????????
+  if (state == 4 || state == -4) {  // ???? ?????????? state ??????? ???????? ???????? ??????????
+    count += (int)(state / 4);      // ???????????/????????? ???????
+    lastTurn = HAL_GetTick();            // ?????????? ????????? ?????????
+  }
+}
+*/
+
 
 /* USER CODE END 4 */
 
