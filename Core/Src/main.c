@@ -38,6 +38,17 @@
 #define USB_HID_VOL_UP    0x40
 #define USB_HID_VOL_DEC   0x80
 
+// USB keyboard codes
+#define USB_HID_MODIFIER_LEFT_CTRL   0x01
+#define USB_HID_MODIFIER_LEFT_SHIFT  0x02
+#define USB_HID_MODIFIER_LEFT_ALT    0x04
+#define USB_HID_MODIFIER_LEFT_GUI    0x08 // (Win/Apple/Meta)
+#define USB_HID_MODIFIER_RIGHT_CTRL  0x10
+#define USB_HID_MODIFIER_RIGHT_SHIFT 0x20
+#define USB_HID_MODIFIER_RIGHT_ALT   0x40
+#define USB_HID_MODIFIER_RIGHT_GUI   0x80
+#define USB_HID_KEY_L     0x0F
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -131,7 +142,7 @@ int main(void)
   mediaHID.keys = 0;
 	
 	int count;
-	int mute_state = 1;
+	int mute_state = 1, next_state = 1, play_state = 1, rev_state = 1;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
@@ -162,10 +173,60 @@ int main(void)
 			mute_state = 1;
 		}
 		
+		if(HAL_GPIO_ReadPin(BTN_NEXT_GPIO_Port, BTN_NEXT_Pin)){
+			if (next_state){
+				mediaHID.keys = USB_HID_SCAN_NEXT;
+				next_state = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+				mediaHID.keys = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+
+			}
+		}
+		else{
+			next_state = 1;
+		}
+		
+		
+		if(HAL_GPIO_ReadPin(BTN_PLAY_GPIO_Port, BTN_PLAY_Pin)){
+			if (play_state){
+				mediaHID.keys = USB_HID_PAUSE;
+				play_state = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+				mediaHID.keys = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+
+			}
+		}
+		else{
+			play_state = 1;
+		}
+		
+		
+		if(HAL_GPIO_ReadPin(BTN_REV_GPIO_Port, BTN_REV_Pin)){
+			if (rev_state){
+				mediaHID.keys = USB_HID_SCAN_PREV;
+				rev_state = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+				mediaHID.keys = 0;
+				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+				HAL_Delay(30);
+
+			}
+		}
+		else{
+			rev_state = 1;
+		}
+		
 		int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
     currCounter = 32767 - ((currCounter-1) & 0xFFFF) / 2;
     if(currCounter > 32768/2) {
-        // ??????????? ???????? ???????? ??:
+        // ??????????? ???????? ???????? ??
         //  ... 32766, 32767, 0, 1, 2 ...
         // ? ????????:
         //  ... -2, -1, 0, 1, 2 ...
@@ -282,11 +343,11 @@ static void MX_TIM1_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 15;
+  sConfig.IC1Filter = 10;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 15;
+  sConfig.IC2Filter = 10;
   if (HAL_TIM_Encoder_Init(&htim1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -327,11 +388,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : ENC_BTN_Pin */
-  GPIO_InitStruct.Pin = ENC_BTN_Pin;
+  /*Configure GPIO pins : ENC_BTN_Pin BTN_PLAY_Pin BTN_NEXT_Pin BTN_REV_Pin */
+  GPIO_InitStruct.Pin = ENC_BTN_Pin|BTN_PLAY_Pin|BTN_NEXT_Pin|BTN_REV_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(ENC_BTN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 

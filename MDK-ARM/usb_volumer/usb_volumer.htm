@@ -3,11 +3,11 @@
 <title>Static Call Graph - [usb_volumer\usb_volumer.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image usb_volumer\usb_volumer.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Fri Feb 12 19:18:25 2021
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Mon Feb 15 15:09:57 2021
 <BR><P>
 <H3>Maximum Stack Usage =        204 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
-USB_LP_CAN1_RX0_IRQHandler &rArr; HAL_PCD_IRQHandler &rArr; PCD_EP_ISR_Handler &rArr; HAL_PCD_EP_DB_Transmit &rArr; HAL_PCD_DataInStageCallback &rArr; USBD_LL_DataInStage &rArr; USBD_CtlReceiveStatus &rArr; USBD_LL_PrepareReceive &rArr; HAL_PCD_EP_Receive &rArr; USB_EPStartXfer &rArr; USB_WritePMA
+USB_LP_CAN1_RX0_IRQHandler &rArr; HAL_PCD_IRQHandler &rArr; PCD_EP_ISR_Handler &rArr; HAL_PCD_SetupStageCallback &rArr; USBD_LL_SetupStage &rArr; USBD_StdDevReq &rArr; USBD_GetDescriptor &rArr; USBD_CtlSendData &rArr; USBD_LL_Transmit &rArr; HAL_PCD_EP_Transmit &rArr; USB_EPStartXfer &rArr; USB_WritePMA
 <P>
 <H3>
 Mutually Recursive functions
@@ -412,8 +412,8 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USBD_LL_DataInStage
 </UL>
-<BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Transmit
-<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PCD_EP_ISR_Handler
+<BR>[Called By]<UL><LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PCD_EP_ISR_Handler
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Transmit
 </UL>
 
 <P><STRONG><a name="[58]"></a>HAL_PCD_DataOutStageCallback</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, usbd_conf.o(i.HAL_PCD_DataOutStageCallback))
@@ -474,7 +474,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[6a]"></a>HAL_PCD_IRQHandler</STRONG> (Thumb, 340 bytes, Stack size 24 bytes, stm32f1xx_hal_pcd.o(i.HAL_PCD_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 204<LI>Call Chain = HAL_PCD_IRQHandler &rArr; PCD_EP_ISR_Handler &rArr; HAL_PCD_EP_DB_Transmit &rArr; HAL_PCD_DataInStageCallback &rArr; USBD_LL_DataInStage &rArr; USBD_CtlReceiveStatus &rArr; USBD_LL_PrepareReceive &rArr; HAL_PCD_EP_Receive &rArr; USB_EPStartXfer &rArr; USB_WritePMA
+<BR><BR>[Stack]<UL><LI>Max Depth = 204<LI>Call Chain = HAL_PCD_IRQHandler &rArr; PCD_EP_ISR_Handler &rArr; HAL_PCD_SetupStageCallback &rArr; USBD_LL_SetupStage &rArr; USBD_StdDevReq &rArr; USBD_GetDescriptor &rArr; USBD_CtlSendData &rArr; USBD_LL_Transmit &rArr; HAL_PCD_EP_Transmit &rArr; USB_EPStartXfer &rArr; USB_WritePMA
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_SetAddress
 <LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_SuspendCallback
@@ -1121,7 +1121,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[2d]"></a>USB_LP_CAN1_RX0_IRQHandler</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, stm32f1xx_it.o(i.USB_LP_CAN1_RX0_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 204<LI>Call Chain = USB_LP_CAN1_RX0_IRQHandler &rArr; HAL_PCD_IRQHandler &rArr; PCD_EP_ISR_Handler &rArr; HAL_PCD_EP_DB_Transmit &rArr; HAL_PCD_DataInStageCallback &rArr; USBD_LL_DataInStage &rArr; USBD_CtlReceiveStatus &rArr; USBD_LL_PrepareReceive &rArr; HAL_PCD_EP_Receive &rArr; USB_EPStartXfer &rArr; USB_WritePMA
+<BR><BR>[Stack]<UL><LI>Max Depth = 204<LI>Call Chain = USB_LP_CAN1_RX0_IRQHandler &rArr; HAL_PCD_IRQHandler &rArr; PCD_EP_ISR_Handler &rArr; HAL_PCD_SetupStageCallback &rArr; USBD_LL_SetupStage &rArr; USBD_StdDevReq &rArr; USBD_GetDescriptor &rArr; USBD_CtlSendData &rArr; USBD_LL_Transmit &rArr; HAL_PCD_EP_Transmit &rArr; USB_EPStartXfer &rArr; USB_WritePMA
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_IRQHandler
 </UL>
@@ -1134,8 +1134,8 @@ Global Symbols
 <P><STRONG><a name="[5f]"></a>USB_ReadPMA</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, stm32f1xx_ll_usb.o(i.USB_ReadPMA))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = USB_ReadPMA
 </UL>
-<BR>[Called By]<UL><LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Receive
-<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PCD_EP_ISR_Handler
+<BR>[Called By]<UL><LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PCD_EP_ISR_Handler
+<LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Receive
 </UL>
 
 <P><STRONG><a name="[77]"></a>USB_SetCurrentMode</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, stm32f1xx_ll_usb.o(i.USB_SetCurrentMode))
@@ -1149,8 +1149,8 @@ Global Symbols
 <P><STRONG><a name="[61]"></a>USB_WritePMA</STRONG> (Thumb, 38 bytes, Stack size 8 bytes, stm32f1xx_ll_usb.o(i.USB_WritePMA))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = USB_WritePMA
 </UL>
-<BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Transmit
-<LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USB_EPStartXfer
+<BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USB_EPStartXfer
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Transmit
 </UL>
 
 <P><STRONG><a name="[14]"></a>UsageFault_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f1xx_it.o(i.UsageFault_Handler))
@@ -1166,7 +1166,7 @@ Global Symbols
 
 <P><STRONG><a name="[cf]"></a>__scatterload_zeroinit</STRONG> (Thumb, 14 bytes, Stack size unknown bytes, handlers.o(i.__scatterload_zeroinit), UNUSED)
 
-<P><STRONG><a name="[44]"></a>main</STRONG> (Thumb, 266 bytes, Stack size 8 bytes, main.o(i.main))
+<P><STRONG><a name="[44]"></a>main</STRONG> (Thumb, 472 bytes, Stack size 8 bytes, main.o(i.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = main &rArr; SystemClock_Config &rArr; HAL_RCC_ClockConfig &rArr; HAL_InitTick &rArr; HAL_NVIC_SetPriority
 </UL>
 <BR>[Calls]<UL><LI><a href="#[ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USBD_HID_SendReport
@@ -1240,15 +1240,15 @@ Local Symbols
 </UL>
 
 <P><STRONG><a name="[6c]"></a>PCD_EP_ISR_Handler</STRONG> (Thumb, 764 bytes, Stack size 40 bytes, stm32f1xx_hal_pcd.o(i.PCD_EP_ISR_Handler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 180<LI>Call Chain = PCD_EP_ISR_Handler &rArr; HAL_PCD_EP_DB_Transmit &rArr; HAL_PCD_DataInStageCallback &rArr; USBD_LL_DataInStage &rArr; USBD_CtlReceiveStatus &rArr; USBD_LL_PrepareReceive &rArr; HAL_PCD_EP_Receive &rArr; USB_EPStartXfer &rArr; USB_WritePMA
+<BR><BR>[Stack]<UL><LI>Max Depth = 180<LI>Call Chain = PCD_EP_ISR_Handler &rArr; HAL_PCD_SetupStageCallback &rArr; USBD_LL_SetupStage &rArr; USBD_StdDevReq &rArr; USBD_GetDescriptor &rArr; USBD_CtlSendData &rArr; USBD_LL_Transmit &rArr; HAL_PCD_EP_Transmit &rArr; USB_EPStartXfer &rArr; USB_WritePMA
 </UL>
-<BR>[Calls]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Transmit
-<LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Receive
-<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_SetupStageCallback
+<BR>[Calls]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_SetupStageCallback
 <LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_DataOutStageCallback
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_DataInStageCallback
 <LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USB_ReadPMA
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USB_EPStartXfer
+<LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Transmit
+<LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_EP_DB_Receive
 </UL>
 <BR>[Called By]<UL><LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_IRQHandler
 </UL>
