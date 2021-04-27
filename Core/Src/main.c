@@ -62,7 +62,6 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
 
@@ -71,10 +70,9 @@ TIM_HandleTypeDef htim1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
-void setCount(int state);
+//void setCount(int state);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -83,7 +81,10 @@ volatile long pause    = 50;
 volatile long lastTurn = 0;
 volatile int state = 0; 
 volatile int count = 0; 
-int actualcount    = 0;       
+int actualcount    = 0; 
+
+
+volatile int rotation_side = 0;
 /* USER CODE END 0 */
 
 /**
@@ -115,7 +116,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
-  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	  // HID Mouse
   struct mouseHID_t {
@@ -144,17 +144,36 @@ int main(void)
 	int count;
 	int mute_state = 1, next_state = 1, play_state = 1, rev_state = 1;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+	//HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		
+	
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		
+			if(rotation_side > 0){
+				mediaHID.keys = USB_HID_VOL_UP;
+				//for(int i = 0; i < rotation_side; i++){
+					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					HAL_Delay(10);
+				//}
+				rotation_side = 0;
+			}
+			else if (rotation_side < 0){
+				mediaHID.keys = USB_HID_VOL_DEC;
+				//for(int i = 0; i > rotation_side; i--){
+					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					HAL_Delay(10);
+				//}
+				rotation_side = 0;
+			} 
 		
 		
 		if(HAL_GPIO_ReadPin(ENC_BTN_GPIO_Port, ENC_BTN_Pin)){
@@ -223,36 +242,6 @@ int main(void)
 			rev_state = 1;
 		}
 		
-		int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
-    currCounter = 32767 - ((currCounter-1) & 0xFFFF) / 2;
-    if(currCounter > 32768/2) {
-        // ??????????? ???????? ???????? ??
-        //  ... 32766, 32767, 0, 1, 2 ...
-        // ? ????????:
-        //  ... -2, -1, 0, 1, 2 ...
-        currCounter = currCounter - 32768;
-    }
-    if(currCounter != actualcount) {
-        int32_t delta = currCounter-actualcount;
-        actualcount = currCounter;
-				//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-				if(delta > 0){
-				mediaHID.keys = USB_HID_VOL_UP;
-				for(int i = 0; i < delta; i++){
-					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(10);
-				}
-			}
-			else if (delta < 0){
-				mediaHID.keys = USB_HID_VOL_DEC;
-				for(int i = 0; i > delta; i--){
-					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(10);
-				}
-			} 
-		}
 		
 			
 				// Send HID report
@@ -288,7 +277,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -302,66 +291,16 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
-  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
+  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV1_5;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief TIM1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM1_Init(void)
-{
-
-  /* USER CODE BEGIN TIM1_Init 0 */
-
-  /* USER CODE END TIM1_Init 0 */
-
-  TIM_Encoder_InitTypeDef sConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
-  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 10;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
-  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
-  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 10;
-  if (HAL_TIM_Encoder_Init(&htim1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM1_Init 2 */
-
-  /* USER CODE END TIM1_Init 2 */
-
 }
 
 /**
@@ -383,7 +322,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -393,6 +332,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : ENC_A_Pin ENC_B_Pin */
+  GPIO_InitStruct.Pin = ENC_B_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	
+	GPIO_InitStruct.Pin = ENC_A_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
@@ -439,7 +393,163 @@ void setCount(int state) {          // ????????????? ???????? ????????
   }
 }
 */
+//AB
+//00 state 0
+//01 state 1	10 state 4
+//11 state 2	11 state 5
+//10 state 3	01 state 6
+//00 state 4	00 state 9
 
+
+
+
+void b_fall(void){
+	if (state == 2 && !HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+		rotation_side += -1;
+		state = 0;
+	}
+	else if (state == 4 && !HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+		rotation_side += 1;
+		state = 0;
+	}
+	else {
+		state = 0;
+	}
+}
+
+
+
+void b_rise(void){
+	if (state == 0 && !HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+		state = 3;
+		GPIO_InitTypeDef GPIO_InitStruct = {0};
+		GPIO_InitStruct.Pin = ENC_A_Pin;
+		GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+		GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	}
+	else if (state == 0 && HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+		state = 1;
+		GPIO_InitTypeDef GPIO_InitStruct = {0};
+		GPIO_InitStruct.Pin = ENC_A_Pin;
+		GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+		GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	}
+	else {
+		state = 0;
+	}
+}
+
+void a_fall(void){
+		GPIO_InitTypeDef GPIO_InitStruct = {0};
+		GPIO_InitStruct.Pin = ENC_A_Pin;
+		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+		GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	if (state == 1 && HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+		state = 2;
+	}
+	else{
+		state = 0;
+	}
+
+}
+
+void a_rise(void){
+		GPIO_InitTypeDef GPIO_InitStruct = {0};
+		GPIO_InitStruct.Pin = ENC_A_Pin;
+		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+		GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	if (state == 3 && HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+		state = 4;
+	}
+	else{
+		state = 0;
+	}
+}
+
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin==ENC_A_Pin){
+		for(int i = 0; i < 100; i++){};
+		if (HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+			a_rise();
+		}
+		else{
+			a_fall();
+		}
+	}else{
+		for(int i = 0; i < 100; i++){};
+		if (HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+			b_rise();
+		}
+		else{
+			b_fall();
+		}
+	}
+
+}
+
+
+
+
+//void b_fall(void){
+//	if (state == 2 && HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+//		state = 3;
+//	}
+//	else if (state == 6 && !HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+//		rotation_side += -1;
+//		state = 0;
+//	}
+//	else {
+//		state = 0;
+//	}
+//}
+
+
+
+//void b_rise(void){
+//	if (state == 4 && HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+//		state = 5;
+//	}
+//	else if (state == 0 && !HAL_GPIO_ReadPin(ENC_A_GPIO_Port, ENC_A_Pin)){
+//		state = 1;
+//	}
+//	else {
+//		state = 0;
+//	}
+//}
+
+
+
+//void a_fall(void){
+//	if (state == 3 && !HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+//		rotation_side += 1;
+//		state = 0;
+//	}
+//	else if (state == 5 && HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+//		state = 6;
+//	}
+//	else {
+//		state = 0;
+//	}
+//}
+
+//void a_rise(void){
+//	if (state == 0 && !HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+//		state = 4;
+//	}
+//	else if (state == 1 && HAL_GPIO_ReadPin(ENC_B_GPIO_Port, ENC_B_Pin)){
+//		state = 2;
+//	}
+//	else {
+//		state = 0;
+//	}
+//}
 
 /* USER CODE END 4 */
 
