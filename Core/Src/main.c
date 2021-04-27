@@ -158,20 +158,20 @@ int main(void)
     /* USER CODE BEGIN 3 */
 			if(rotation_side > 0){
 				mediaHID.keys = USB_HID_VOL_UP;
-				//for(int i = 0; i < rotation_side; i++){
 					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(10);
-				//}
-				rotation_side = 0;
+					HAL_Delay(30);
+					mediaHID.keys = 0;
+					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					rotation_side = 0;
 			}
 			else if (rotation_side < 0){
-				mediaHID.keys = USB_HID_VOL_DEC;
-				//for(int i = 0; i > rotation_side; i--){
+					mediaHID.keys = USB_HID_VOL_DEC;
 					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(10);
-				//}
+					HAL_Delay(30);
+					mediaHID.keys = 0;
+					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
 				rotation_side = 0;
 			} 
 		
