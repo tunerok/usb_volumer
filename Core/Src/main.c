@@ -85,6 +85,16 @@ volatile int rotation_side = 0;
   * @brief  The application entry point.
   * @retval int
   */
+	void dumb_blinking(void){
+		for(int i = 0; i < 2; i++){
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+			HAL_Delay(30);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+			HAL_Delay(30);
+		}
+	}
+	
+	
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -122,7 +132,7 @@ int main(void)
   mediaHID.id = 2;
   mediaHID.keys = 0;
 
-	int mute_state = 1, next_state = 1, play_state = 1, rev_state = 1;
+	int mute_state = 0, next_state = 0, play_state = 0, rev_state = 0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -137,20 +147,26 @@ int main(void)
     /* USER CODE BEGIN 3 */
 			if(rotation_side > 0){
 				mediaHID.keys = USB_HID_VOL_UP;
-					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(30);
+					HAL_Delay(20);
 					mediaHID.keys = 0;
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+					HAL_Delay(20);
 					rotation_side = 0;
 			}
 			else if (rotation_side < 0){
 					mediaHID.keys = USB_HID_VOL_DEC;
-					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-					HAL_Delay(30);
+					HAL_Delay(20);
 					mediaHID.keys = 0;
 					USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+					HAL_Delay(20);
 				rotation_side = 0;
 			} 
 		
@@ -159,12 +175,13 @@ int main(void)
 			if (mute_state){
 				mediaHID.keys = USB_HID_MUTE;
 				mute_state = 0;
+				dumb_blinking();
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 				mediaHID.keys = 0;
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
-
+				HAL_Delay(20);
+				
 			}
 		}
 		else{
@@ -175,11 +192,12 @@ int main(void)
 			if (next_state){
 				mediaHID.keys = USB_HID_SCAN_NEXT;
 				next_state = 0;
+				dumb_blinking();
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 				mediaHID.keys = 0;
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 
 			}
 		}
@@ -192,11 +210,12 @@ int main(void)
 			if (play_state){
 				mediaHID.keys = USB_HID_PAUSE;
 				play_state = 0;
+				dumb_blinking();
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 				mediaHID.keys = 0;
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 
 			}
 		}
@@ -209,11 +228,12 @@ int main(void)
 			if (rev_state){
 				mediaHID.keys = USB_HID_SCAN_PREV;
 				rev_state = 0;
+				dumb_blinking();
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 				mediaHID.keys = 0;
 				USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&mediaHID, sizeof(struct mediaHID_t));
-				HAL_Delay(30);
+				HAL_Delay(20);
 
 			}
 		}
@@ -288,7 +308,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
